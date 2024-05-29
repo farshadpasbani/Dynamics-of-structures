@@ -16,92 +16,98 @@ def load_txt_files(directory):
 
 
 # Function to reshape the acceleration matrix into a vector and create a corresponding time vector
-def reshape_acceleration_matrix(accel_matrix, time_step):
-    accel_vector = accel_matrix.flatten()
-    time_vector = np.arange(len(accel_vector)) * time_step
-    return time_vector, accel_vector
+def reshape_acceleration_matrix(acceleration_matrix, time_step):
+    # Flatten the 2D acceleration matrix into a 1D vector
+    acceleration_vector = acceleration_matrix.flatten()
+    # Create a time vector based on the number of data points and the time step
+    time_vector = np.arange(len(acceleration_vector)) * time_step
+    return time_vector, acceleration_vector
 
 
 # Function to calculate the coefficients needed for computing displacement and velocity
-def calculate_coefficients(damping_ratio, angular_freq, damped_angular_freq, time_step):
+def calculate_coefficients(
+    damping_ratio, angular_frequency, damped_angular_frequency, time_step
+):
     coefficients = [
-        np.exp(-damping_ratio * angular_freq * time_step)
+        np.exp(-damping_ratio * angular_frequency * time_step)
         * (
             damping_ratio
-            * angular_freq
-            / damped_angular_freq
-            * np.sin(damped_angular_freq * time_step)
-            + np.cos(damped_angular_freq * time_step)
+            * angular_frequency
+            / damped_angular_frequency
+            * np.sin(damped_angular_frequency * time_step)
+            + np.cos(damped_angular_frequency * time_step)
         ),
-        np.exp(-damping_ratio * angular_freq * time_step)
-        * (1 / damped_angular_freq * np.sin(damped_angular_freq * time_step)),
+        np.exp(-damping_ratio * angular_frequency * time_step)
+        * (1 / damped_angular_frequency * np.sin(damped_angular_frequency * time_step)),
         1
-        / angular_freq**2
+        / angular_frequency**2
         * (
-            2 * damping_ratio / (angular_freq * time_step)
-            + np.exp(-damping_ratio * angular_freq * time_step)
+            2 * damping_ratio / (angular_frequency * time_step)
+            + np.exp(-damping_ratio * angular_frequency * time_step)
             * (
                 (
-                    (1 - 2 * damping_ratio**2) / (damped_angular_freq * time_step)
+                    (1 - 2 * damping_ratio**2) / (damped_angular_frequency * time_step)
                     - (damping_ratio / np.sqrt(1 - damping_ratio**2))
                 )
-                * np.sin(damped_angular_freq * time_step)
-                - (1 + 2 * damping_ratio / (angular_freq * time_step))
-                * np.cos(damped_angular_freq * time_step)
+                * np.sin(damped_angular_frequency * time_step)
+                - (1 + 2 * damping_ratio / (angular_frequency * time_step))
+                * np.cos(damped_angular_frequency * time_step)
             )
         ),
         1
-        / angular_freq**2
+        / angular_frequency**2
         * (
             1
-            - 2 * damping_ratio / (angular_freq * time_step)
-            + np.exp(-damping_ratio * angular_freq * time_step)
+            - 2 * damping_ratio / (angular_frequency * time_step)
+            + np.exp(-damping_ratio * angular_frequency * time_step)
             * (
                 (2 * damping_ratio**2 - 1)
-                / (angular_freq * time_step)
-                * np.sin(damped_angular_freq * time_step)
+                / (angular_frequency * time_step)
+                * np.sin(damped_angular_frequency * time_step)
                 + 2
                 * damping_ratio
-                / (angular_freq * time_step)
-                * np.cos(damped_angular_freq * time_step)
+                / (angular_frequency * time_step)
+                * np.cos(damped_angular_frequency * time_step)
             )
         ),
-        -np.exp(-damping_ratio * angular_freq * time_step)
+        -np.exp(-damping_ratio * angular_frequency * time_step)
         * (
-            angular_freq**2
-            / damped_angular_freq
-            * np.sin(damped_angular_freq * time_step)
+            angular_frequency**2
+            / damped_angular_frequency
+            * np.sin(damped_angular_frequency * time_step)
         ),
-        np.exp(-damping_ratio * angular_freq * time_step)
-        * np.cos(damped_angular_freq * time_step)
+        np.exp(-damping_ratio * angular_frequency * time_step)
+        * np.cos(damped_angular_frequency * time_step)
         - damping_ratio
-        * angular_freq
-        / damped_angular_freq
-        * np.sin(damped_angular_freq * time_step),
+        * angular_frequency
+        / damped_angular_frequency
+        * np.sin(damped_angular_frequency * time_step),
         1
-        / angular_freq**2
+        / angular_frequency**2
         * (
-            np.exp(-damping_ratio * angular_freq * time_step)
+            np.exp(-damping_ratio * angular_frequency * time_step)
             * (
                 (
-                    angular_freq**2 / damped_angular_freq
-                    + angular_freq * damping_ratio / (damped_angular_freq * time_step)
+                    angular_frequency**2 / damped_angular_frequency
+                    + angular_frequency
+                    * damping_ratio
+                    / (damped_angular_frequency * time_step)
                 )
-                * np.sin(damped_angular_freq * time_step)
-                + 1 / time_step * np.cos(damped_angular_freq * time_step)
+                * np.sin(damped_angular_frequency * time_step)
+                + 1 / time_step * np.cos(damped_angular_frequency * time_step)
             )
             - 1 / time_step
         ),
         1
-        / (angular_freq**2 * time_step)
+        / (angular_frequency**2 * time_step)
         * (
-            -np.exp(-damping_ratio * angular_freq * time_step)
+            -np.exp(-damping_ratio * angular_frequency * time_step)
             * (
-                angular_freq
+                angular_frequency
                 * damping_ratio
-                / damped_angular_freq
-                * np.sin(damped_angular_freq * time_step)
-                + np.cos(damped_angular_freq * time_step)
+                / damped_angular_frequency
+                * np.sin(damped_angular_frequency * time_step)
+                + np.cos(damped_angular_frequency * time_step)
             )
             + 1
         ),
@@ -111,8 +117,10 @@ def calculate_coefficients(damping_ratio, angular_freq, damped_angular_freq, tim
 
 # Function to compute displacement and velocity over time for given acceleration data
 def compute_displacement_velocity(acceleration, coefficients):
+    # Initialize displacement and velocity arrays with zeros
     displacement = np.zeros_like(acceleration)
     velocity = np.zeros_like(acceleration)
+    # Iterate through the acceleration data to compute displacement and velocity
     for i in range(len(acceleration) - 1):
         displacement[i + 1], velocity[i + 1] = compute_next_displacement_velocity(
             coefficients,
@@ -126,11 +134,18 @@ def compute_displacement_velocity(acceleration, coefficients):
 
 # Function to compute the next displacement and velocity based on current states and ground accelerations
 def compute_next_displacement_velocity(
-    constants, displacement_prev, velocity_prev, ground_accel_current, ground_accel_next
+    coefficients,
+    displacement_prev,
+    velocity_prev,
+    ground_accel_current,
+    ground_accel_next,
 ):
-    A, B, C, D, AA, BB, CC, DD = constants
+    # Unpack the coefficients
+    A, B, C, D, AA, BB, CC, DD = coefficients
+    # Compute the forces based on the ground acceleration
     force_current = -ground_accel_current
     force_next = -ground_accel_next
+    # Compute the next displacement and velocity
     displacement_next = (
         A * displacement_prev + B * velocity_prev + C * force_current + D * force_next
     )
@@ -144,88 +159,131 @@ def compute_next_displacement_velocity(
 
 
 def main():
-    # Load Bam earthquake data from the current directory
+    # Load earthquake data from the current directory
     directory = os.path.curdir
     data = load_txt_files(directory)
 
-    # Ensure the correct keys are used
-    eq1, eq2, eq3 = data[0], data[1], data[2]
+    # Assign the first three loaded data arrays to earthquake1_data, earthquake2_data, earthquake3_data
+    earthquake1_data, earthquake2_data, earthquake3_data = data[0], data[1], data[2]
 
+    # Define the time step for the data
     time_step = 0.01  # s
-    _, eq1vec = reshape_acceleration_matrix(eq1, time_step)
-    _, eq2vec = reshape_acceleration_matrix(eq2, time_step)
-    eq_time_vector, eq3vec = reshape_acceleration_matrix(eq3, time_step)
+
+    # Reshape the acceleration matrices into vectors
+    _, earthquake1_vector = reshape_acceleration_matrix(earthquake1_data, time_step)
+    _, earthquake2_vector = reshape_acceleration_matrix(earthquake2_data, time_step)
+    time_vector, earthquake3_vector = reshape_acceleration_matrix(
+        earthquake3_data, time_step
+    )
 
     # Peak Ground Acceleration (PGA) scaling
-    PGA1 = np.max(eq1vec)
-    PGA2 = np.max(eq2vec)
-    SF1 = 1 / max(PGA1, PGA2)
-    eq1vec *= SF1
-    eq2vec *= SF1
+    PGA1 = np.max(earthquake1_vector)
+    PGA2 = np.max(earthquake2_vector)
+    scaling_factor = 1 / max(PGA1, PGA2)
+    earthquake1_vector *= scaling_factor
+    earthquake2_vector *= scaling_factor
 
     # Generate 2800 spectrum
-    T0 = 0.15
-    Ts = 0.7
-    S = 1.75
-    S0 = 1.1
-    t_step = 0.01
-    Tmax = 4
-    tvec = np.arange(0, 5 + t_step, t_step)
-    B = np.zeros_like(tvec)
-    j = 0
+    initial_period = 0.15
+    transition_period = 0.7
+    spectrum_amplitude = 1.75
+    initial_spectrum_amplitude = 1.1
+    time_increment = 0.01
+    max_time = 4
+    time_values = np.arange(0, 5 + time_increment, time_increment)
+    spectrum_values = np.zeros_like(time_values)
+    index = 0
 
-    for T in tvec:
-        if T <= Ts:
-            N = 1
-        elif T <= 4:
-            N = 0.7 / (4 - Ts) * (T - Ts) + 1
+    for period in time_values:
+        # Compute the amplification factor based on the period
+        if period <= transition_period:
+            amplification_factor = 1
+        elif period <= 4:
+            amplification_factor = (
+                0.7 / (4 - transition_period) * (period - transition_period) + 1
+            )
         else:
-            N = 1.7
-        if T <= T0:
-            B[j] = S0 + (S - S0 + 1) * (T / T0)
-        elif T <= Ts:
-            B[j] = S + 1
+            amplification_factor = 1.7
+        # Compute the spectral value based on the period
+        if period <= initial_period:
+            spectrum_values[index] = initial_spectrum_amplitude + (
+                spectrum_amplitude - initial_spectrum_amplitude + 1
+            ) * (period / initial_period)
+        elif period <= transition_period:
+            spectrum_values[index] = spectrum_amplitude + 1
         else:
-            B[j] = (S + 1) * (Ts / T)
-        B[j] *= N
-        j += 1
+            spectrum_values[index] = (spectrum_amplitude + 1) * (
+                transition_period / period
+            )
+        spectrum_values[index] *= amplification_factor
+        index += 1
 
-    plt.plot(tvec, B, label="2800 Spectrum")
+    # Plot the 2800 spectrum
+    plt.plot(time_values, spectrum_values, label="2800 Spectrum")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Spectral Amplitude")
+    plt.title("2800 Spectrum")
     plt.legend()
     plt.show()
 
-    # Bam spectrum computation
-    su = [0]
-    sv = [0]
-    zeta = 0.05
-    for T in np.arange(0.1, 5.1, 0.1):
-        Omega = 2 * np.pi / T
-        Wd = Omega * np.sqrt(1 - zeta**2)
-        Coefs = calculate_coefficients(zeta, Omega, Wd, time_step)
-        Bam1u, Bam1v = compute_displacement_velocity(eq1vec, Coefs)
-        Bam2u, Bam2v = compute_displacement_velocity(eq2vec, Coefs)
+    # Compute and plot the response spectrum for the earthquake data
+    spectral_displacement1 = [0]
+    spectral_displacement2 = [0]
+    damping_ratio = 0.05
+    for period in np.arange(0.1, 5.1, 0.1):
+        # Compute the natural frequency and damped natural frequency
+        natural_frequency = 2 * np.pi / period
+        damped_natural_frequency = natural_frequency * np.sqrt(1 - damping_ratio**2)
+        # Calculate the coefficients for the current period
+        coefficients = calculate_coefficients(
+            damping_ratio, natural_frequency, damped_natural_frequency, time_step
+        )
+        # Compute the displacement and velocity for the given acceleration data
+        displacement1, velocity1 = compute_displacement_velocity(
+            earthquake1_vector, coefficients
+        )
+        displacement2, velocity2 = compute_displacement_velocity(
+            earthquake2_vector, coefficients
+        )
 
-        plt.plot(eq_time_vector, Bam1u, label=f"Bam1u {T:.2f}")
-        plt.plot(eq_time_vector, Bam2u, label=f"Bam2u {T:.2f}")
-        su.append(Omega**2 * np.max(Bam1u))
-        sv.append(Omega**2 * np.max(Bam2u))
+        # Plot the displacement response for the current period
+        plt.plot(
+            time_vector, displacement1, label=f"Displacement for Period {period:.2f} s"
+        )
+        plt.plot(
+            time_vector, displacement2, label=f"Displacement for Period {period:.2f} s"
+        )
+        # Append the maximum displacement values to the spectral displacement lists
+        spectral_displacement1.append(natural_frequency**2 * np.max(displacement1))
+        spectral_displacement2.append(natural_frequency**2 * np.max(displacement2))
 
+    plt.xlabel("Time (s)")
+    plt.ylabel("Displacement (m)")
+    plt.title("Displacement Response for Different Periods")
     plt.legend()
     plt.show()
 
-    su = np.array(su[1:])
-    sv = np.array(sv[1:])
-    sfinal = np.sqrt(su**2 + sv**2)
-    Btmp = 1.3 * B
+    # Compute the final spectrum values
+    spectral_displacement1 = np.array(spectral_displacement1[1:])
+    spectral_displacement2 = np.array(spectral_displacement2[1:])
+    final_spectrum_values = np.sqrt(
+        spectral_displacement1**2 + spectral_displacement2**2
+    )
+    scaled_spectrum_values = 1.3 * spectrum_values
 
-    T = np.arange(0.1, 5.1, 0.1)
-    plt.plot(T, su, label="su")
-    plt.plot(T, sv, label="sv")
-    plt.plot(T, sfinal, label="sfinal")
-    plt.plot(tvec, 1.3 * B, label="1.3*B")
+    # Plot the final spectrum values
+    period_values = np.arange(0.1, 5.1, 0.1)
+    plt.plot(period_values, spectral_displacement1, label="Spectral Displacement 1")
+    plt.plot(period_values, spectral_displacement2, label="Spectral Displacement 2")
+    plt.plot(period_values, final_spectrum_values, label="Final Combined Spectrum")
+    plt.plot(time_values, scaled_spectrum_values, label="Scaled 2800 Spectrum")
+    plt.xlabel("Period (s)")
+    plt.ylabel("Spectral Displacement (m)")
+    plt.title("Final Spectral Displacements and Combined Spectrum")
     plt.legend()
     plt.show()
 
 
+# Execute the main function
 if __name__ == "__main__":
     main()
